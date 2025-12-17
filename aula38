@@ -1,0 +1,46 @@
+rvices:
+  postgres:
+    image: postgres:15
+    container_name: escola-database
+    environment:
+      POSTGRES_USER: escola
+      POSTGRES_PASSWORD: escola
+      POSTGRES_DB: escola
+    volumes:
+      - escola_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - escola-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U escola -d escola"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  projeto:
+    build: .
+    container_name: api-alunos
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - escola-network
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    healthcheck:
+      timeout: 5s
+      retries: 3
+
+volumes:
+  escola_data:
+
+networks:
+ escola-network:
+    driver: bridge
